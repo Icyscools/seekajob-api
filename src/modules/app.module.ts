@@ -1,11 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { UserModule } from './users/user.module';
 import { LoggerMiddleware } from '../middlewares/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-
-const modules = [UserModule];
-
+import { CoreModule } from './core/core.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -19,7 +16,7 @@ const modules = [UserModule];
       autoLoadEntities: true,
       synchronize: true,
     }),
-    ...modules,
+    CoreModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -7,8 +7,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Job } from '../../jobs/entities/job.entity';
 
 @Entity()
 export class Company {
@@ -18,6 +20,9 @@ export class Company {
   @OneToOne(() => User)
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Job, (job) => job.company)
+  jobs: Job[];
 
   @Column()
   company_name: string;
