@@ -7,8 +7,9 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
-import { Job, Worker } from '.';
+import { Job, Worker, Interview } from '.';
 
 @Entity()
 export class Application {
@@ -23,6 +24,9 @@ export class Application {
 
   @ManyToOne(() => Worker, (worker) => worker.applications)
   worker: Worker;
+
+  @OneToOne(() => Interview, (interview) => interview.application)
+  interview: Interview;
 
   @Column({
     type: 'enum',
