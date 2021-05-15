@@ -11,7 +11,7 @@ import {
   Post,
   ParseIntPipe,
 } from '@nestjs/common';
-import { Job } from '../entities/job.entity';
+import { Job } from '../../../../entities';
 
 @Controller('job')
 export class JobController {

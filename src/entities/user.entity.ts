@@ -7,8 +7,8 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-import { Company, Worker } from './index';
-import { UserRole } from '../dto/user.dto';
+import { Worker, Company } from '.';
+import { UserRole } from 'src/modules/core/users/dto/user.dto';
 
 @Entity()
 export class User {

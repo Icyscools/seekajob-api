@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { Company } from './entities/company.entity';
-import { User } from './entities/user.entity';
-import { Worker } from './entities/worker.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User, Company, Worker } from '../../../entities';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 const entities = [User, Worker, Company];
 

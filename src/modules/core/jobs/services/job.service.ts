@@ -2,9 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateJobDto, UpdateJobDto } from '../dto/job.dto';
-import { Job } from '../entities/job.entity';
-import { Company } from 'src/modules/users/entities';
-
+import { Company, Job } from '../../../../entities';
 @Injectable()
 export class JobService {
   constructor(

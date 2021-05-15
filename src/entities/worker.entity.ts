@@ -1,39 +1,36 @@
-import { Company } from 'src/modules/users/entities';
 import {
   Entity,
   Column,
+  OneToOne,
+  JoinColumn,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  ManyToOne,
+  OneToMany,
 } from 'typeorm';
+import { User, Application } from '.';
 
 @Entity()
-export class Job {
+export class Worker {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  title: string;
+  @OneToOne(() => User)
+  @JoinColumn()
+  user: User;
 
   @Column({ nullable: true })
-  description?: string;
-
-  @Column()
-  location: string;
-
-  @Column()
-  salary: string;
-
-  @Column()
-  recruit_amount: number;
+  qualification?: string;
 
   @Column({ nullable: true })
-  welfare?: string;
+  phone_number?: string;
 
-  @ManyToOne(() => Company, (company) => company.jobs)
-  company: Company;
+  @Column({ nullable: true })
+  experience?: string;
+
+  @OneToMany(() => Application, (application) => application.worker)
+  applications: Application[];
 
   @CreateDateColumn()
   created!: Date;
