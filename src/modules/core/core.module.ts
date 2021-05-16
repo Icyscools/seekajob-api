@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { JobModule } from './jobs/job.module';
+import { AuthModule } from './auths/auth.module';
 import { UserModule } from './users/user.module';
+import { JobModule } from './jobs/job.module';
 import { ApplicationModule } from './applications/application.module';
 import { InterviewModule } from './interviews/interview.module';
 
-const modules = [UserModule, JobModule, ApplicationModule, InterviewModule];
+const modules = [AuthModule, UserModule, JobModule, ApplicationModule, InterviewModule];
 
 @Module({
   imports: [...modules],

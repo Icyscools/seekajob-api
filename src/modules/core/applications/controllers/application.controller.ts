@@ -10,10 +10,13 @@ import {
   Patch,
   Post,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { Application } from '../../../../entities';
 
 @Controller('application')
+@UseGuards(AuthGuard('jwt'))
 export class ApplicationController {
   constructor(private readonly applicationService: ApplicationService) {}
 

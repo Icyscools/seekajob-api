@@ -45,8 +45,7 @@ export class UserService {
         });
         return this.workersRepository.save(workerSchema).then((worker) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...userData } = worker.user;
-          return userData;
+          return worker.user;
         });
       });
     } else if (data.role === UserRole.COMPANY) {
@@ -64,8 +63,7 @@ export class UserService {
         });
         return this.companiesRepository.save(companySchema).then((company) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...userData } = company.user;
-          return userData;
+          return company.user;
         });
       });
     }

@@ -10,5 +10,6 @@ const entities = [User, Worker, Company];
   imports: [TypeOrmModule.forFeature(entities)],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}
