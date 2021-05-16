@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  api:
+    container_name: seekajob-api
+    build:
+      context: .
+      target: production
+    volumes:
+      - ./:/app
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    networks:
+      - seekajob-network
+    expose:
+      - 3000
+
+networks:
+  seekajob-network:
