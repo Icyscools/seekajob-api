@@ -1,4 +1,3 @@
-import { ApplicationStatus } from 'src/modules/core/applications/dto/application.dto';
 import {
   Entity,
   Column,
@@ -22,6 +21,9 @@ export class Interview {
 
   @Column({ type: 'datetime' })
   datetime: Date;
+
+  @Column({ type: 'text' })
+  description: string;
 
   @CreateDateColumn()
   created!: Date;
