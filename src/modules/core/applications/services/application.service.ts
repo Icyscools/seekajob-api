@@ -3,12 +3,14 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateApplicationDto, UpdateApplicationDto } from '../dto/application.dto';
 import { Application, Job, Worker } from '../../../../entities';
 import { UserRole } from '../../users/dto/user.dto';
+import { FilesService } from '../../../shared/uploadfiles/services/files.service';
 
 @Injectable()
 export class ApplicationService {
@@ -19,6 +21,8 @@ export class ApplicationService {
     private workersRepository: Repository<Worker>,
     @InjectRepository(Job)
     private jobsRepository: Repository<Job>,
+    @Inject('FilesService')
+    private filesService: FilesService,
   ) {}
 
   findAll(): Promise<Application[]> {
@@ -58,13 +62,25 @@ export class ApplicationService {
     throw new UnauthorizedException('not logging in');
   }
 
-  async createApplication(data: CreateApplicationDto): Promise<Application> {
+  async createApplication(
+    data: CreateApplicationDto,
+    resumeFile: Express.Multer.File,
+  ): Promise<Application> {
     const { workerId, jobId, ...rest } = data;
     const foundWorker: Worker = await this.workersRepository.findOne(workerId);
     const foundJob: Job = await this.jobsRepository.findOne(jobId);
     if (foundWorker && foundJob) {
-      const applicationSchema = this.applicationsRepository.create({
-        ...rest,
+      const newCreateApplicationDto = rest;
+      if (resumeFile) {
+        const resume = await this.filesService.uploadFile({
+          file: resumeFile,
+          storagePath: `resumes`,
+        });
+        newCreateApplicationDto.resume = resume;
+      }
+
+      const applicationSchema: Application = this.applicationsRepository.create({
+        ...newCreateApplicationDto,
       });
       applicationSchema.worker = foundWorker;
       applicationSchema.job = foundJob;
@@ -74,15 +90,27 @@ export class ApplicationService {
     throw new BadRequestException();
   }
 
-  async updateApplication(data: UpdateApplicationDto): Promise<Application> {
+  async updateApplication(
+    data: UpdateApplicationDto,
+    resumeFile: Express.Multer.File,
+  ): Promise<Application> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { workerId, jobId, id, ...rest } = data;
+    const newUpdateApplicationDto = rest;
+    if (resumeFile) {
+      const resume = await this.filesService.uploadFile({
+        file: resumeFile,
+        storagePath: `resumes`,
+      });
+      newUpdateApplicationDto.resume = resume;
+    }
+
     const promise = Promise.all([
       this.applicationsRepository
         .createQueryBuilder('application')
         .update(Application)
         .set({
-          ...rest,
+          ...newUpdateApplicationDto,
         })
         .where('application.id = :id', { id: id })
         .execute(),

@@ -14,6 +14,7 @@ import {
 import { UserService } from '../../users/services/user.service';
 import { CreateUserDto } from '../../users/dto/user.dto';
 import { UserRole } from '../../users/dto/user.dto';
+import { FilesService } from '../../../shared/uploadfiles/services/files.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,8 @@ export class AuthService {
     private readonly authConfig: AuthConfig,
     @Inject('UserService')
     private userService: UserService,
+    @Inject('FilesService')
+    private filesService: FilesService,
   ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: this.authConfig.userPoolId,
@@ -36,8 +39,16 @@ export class AuthService {
     return user.role;
   }
 
-  registerUser(createUserData: CreateUserDto) {
+  async registerUser(createUserData: CreateUserDto, profileImageFile: Express.Multer.File) {
+    const newCreateUserDto = createUserData;
     const { username, email, password } = createUserData;
+    if (profileImageFile) {
+      const profileImage = await this.filesService.uploadFile({
+        file: profileImageFile,
+        storagePath: `profiles`,
+      });
+      newCreateUserDto.profile_img = profileImage;
+    }
     return new Promise((resolve, reject) => {
       return this.userPool.signUp(
         username,
@@ -48,7 +59,7 @@ export class AuthService {
           if (!result) {
             reject(err);
           } else {
-            this.userService.createUser(createUserData);
+            this.userService.createUser(newCreateUserDto);
             resolve(result.user);
           }
         },

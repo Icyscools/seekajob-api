@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Company, Worker } from '../../../../entities';
+import { FilesService } from '../../../shared/uploadfiles/services/files.service';
 import { UserInfoDto, UserRole, CreateUserDto, UpdateUserDto } from '../dto/user.dto';
 
 @Injectable()
@@ -13,6 +14,8 @@ export class UserService {
     private workersRepository: Repository<Worker>,
     @InjectRepository(Company)
     private companiesRepository: Repository<Company>,
+    @Inject('FilesService')
+    private filesService: FilesService,
   ) {}
 
   findAll(): Promise<User[]> {
@@ -20,13 +23,9 @@ export class UserService {
   }
 
   findOne(id: number): Promise<User> {
-    // return this.usersRepository.findOne(id);
-    return this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.worker', 'worker')
-      .leftJoinAndSelect('user.company', 'company')
-      .where('user.id = :id', { id: id })
-      .getOne();
+    return this.usersRepository.findOne(id, {
+      relations: ['worker', 'company'],
+    });
   }
 
   findByUsername(username: string): Promise<User> {
@@ -96,10 +95,21 @@ export class UserService {
     throw new BadRequestException('invalid role');
   }
 
-  async updateUser(data: UpdateUserDto): Promise<UserInfoDto> {
+  async updateUser(
+    data: UpdateUserDto,
+    profileImageFile: Express.Multer.File,
+  ): Promise<UserInfoDto> {
     const foundUser = await this.findOne(data.id);
     if (foundUser && data.role === UserRole.WORKER) {
       const { experience, phone_number, qualification, ...userData } = data;
+
+      if (profileImageFile) {
+        const profileImage = await this.filesService.uploadFile({
+          file: profileImageFile,
+          storagePath: `profiles`,
+        });
+        userData.profile_img = profileImage;
+      }
 
       const promise = Promise.all([
         this.usersRepository
@@ -127,6 +137,14 @@ export class UserService {
       });
     } else if (foundUser && data.role === UserRole.COMPANY) {
       const { company_name, company_description, ...userData } = data;
+
+      if (profileImageFile) {
+        const profileImage = await this.filesService.uploadFile({
+          file: profileImageFile,
+          storagePath: `profiles`,
+        });
+        userData.profile_img = profileImage;
+      }
 
       const promise = Promise.all([
         this.usersRepository
@@ -156,7 +174,12 @@ export class UserService {
     throw new NotFoundException('not found user');
   }
 
-  async updateCurrentUser(username: string, role: UserRole, dto: UpdateUserDto) {
+  async updateCurrentUser(
+    username: string,
+    role: UserRole,
+    dto: UpdateUserDto,
+    profileImageFile: Express.Multer.File,
+  ) {
     const foundUser = await this.findFromCurrentUser(username, role);
     if (foundUser) {
       const newDto: UpdateUserDto = {
@@ -164,7 +187,7 @@ export class UserService {
         id: foundUser.id,
         role: role,
       };
-      return this.updateUser(newDto);
+      return this.updateUser(newDto, profileImageFile);
     }
     throw new NotFoundException('not found user');
   }

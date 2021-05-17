@@ -9,11 +9,14 @@ import {
   ParseIntPipe,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UserInfoDto, UpdateUserDto } from '../dto/user.dto';
 import { UserService } from '../services/user.service';
 import { User } from '../../../../entities';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 @UseGuards(AuthGuard('jwt'))
@@ -59,10 +62,14 @@ export class UserController {
 
   @Patch()
   @Header('Cache-Control', 'none')
-  updateUser(@Body() dto: UpdateUserDto): Promise<UserInfoDto> {
+  @UseInterceptors(FileInterceptor('profile_image'))
+  updateUser(
+    @Body() dto: UpdateUserDto,
+    @UploadedFile() profileImage: Express.Multer.File,
+  ): Promise<UserInfoDto> {
     const promise = new Promise<UserInfoDto>((resolve, reject) => {
       try {
-        const user = this.userService.updateUser(dto);
+        const user = this.userService.updateUser(dto, profileImage);
         resolve(user);
       } catch (err) {
         console.error(err);
@@ -74,11 +81,16 @@ export class UserController {
 
   @Patch('/me')
   @Header('Cache-Control', 'none')
-  updateCurrentUser(@Req() req, @Body() dto: UpdateUserDto): Promise<UserInfoDto> {
+  @UseInterceptors(FileInterceptor('profile_image'))
+  updateCurrentUser(
+    @Req() req,
+    @Body() dto: UpdateUserDto,
+    @UploadedFile() profileImage: Express.Multer.File,
+  ): Promise<UserInfoDto> {
     const { username, role } = req.user;
     const promise = new Promise<UserInfoDto>((resolve, reject) => {
       try {
-        const user = this.userService.updateCurrentUser(username, role, dto);
+        const user = this.userService.updateCurrentUser(username, role, dto, profileImage);
         resolve(user);
       } catch (err) {
         console.error(err);

@@ -1,4 +1,12 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateUserDto } from '../../users/dto/user.dto';
 import {
   AuthConfirmSignUpDto,
@@ -6,13 +14,18 @@ import {
   AuthResendConfirmationDto,
 } from '../dto/auth.dto';
 import { AuthService } from '../services/auth.service';
+import { Express } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
+  @UseInterceptors(FileInterceptor('profile_image'))
+  async register(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() profileImage: Express.Multer.File,
+  ) {
     if (
       createUserDto.password.length < 8 ||
       !/[a-z]/.test(createUserDto.password) ||
@@ -23,7 +36,7 @@ export class AuthController {
     }
 
     try {
-      return await this.authService.registerUser(createUserDto);
+      return await this.authService.registerUser(createUserDto, profileImage);
     } catch (e) {
       console.error(e);
       throw new BadRequestException(e.message);

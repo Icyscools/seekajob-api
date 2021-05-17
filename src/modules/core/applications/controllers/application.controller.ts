@@ -10,6 +10,8 @@ import {
   ParseIntPipe,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Application } from '../../../../entities';
@@ -18,6 +20,7 @@ import { CreateApplicationDto, UpdateApplicationDto } from '../dto/application.d
 import { RolesGuard } from '../../../shared/roles/guards/role.guard';
 import { Roles } from '../../../shared/roles/decorators/role.decorator';
 import { UserRole } from '../../users/dto/user.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('application')
 @UseGuards(RolesGuard)
@@ -44,11 +47,15 @@ export class ApplicationController {
   @Post()
   @Roles(UserRole.WORKER)
   @Header('Cache-Control', 'none')
-  createApplication(@Body() dto: CreateApplicationDto): Promise<Application> {
+  @UseInterceptors(FileInterceptor('resume'))
+  createApplication(
+    @Body() dto: CreateApplicationDto,
+    @UploadedFile() resumeFile: Express.Multer.File,
+  ): Promise<Application> {
     const promise = new Promise<Application>((resolve, reject) => {
       try {
         const application = this.applicationService
-          .createApplication(dto)
+          .createApplication(dto, resumeFile)
           .then((Application) => Application)
           .catch((err) => {
             throw err;
@@ -64,11 +71,15 @@ export class ApplicationController {
 
   @Patch()
   @Header('Cache-Control', 'none')
-  updateApplication(@Body() dto: UpdateApplicationDto): Promise<Application> {
+  @UseInterceptors(FileInterceptor('resume'))
+  updateApplication(
+    @Body() dto: UpdateApplicationDto,
+    @UploadedFile() resumeFile: Express.Multer.File,
+  ): Promise<Application> {
     const promise = new Promise<Application>((resolve, reject) => {
       try {
         const application = this.applicationService
-          .updateApplication(dto)
+          .updateApplication(dto, resumeFile)
           .then((Application) => Application)
           .catch((err) => {
             throw err;
