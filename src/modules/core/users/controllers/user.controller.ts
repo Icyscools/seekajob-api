@@ -6,15 +6,17 @@ import {
   Header,
   Param,
   Patch,
-  Post,
   ParseIntPipe,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserInfoDto } from '../dto/user.dto';
+import { UserInfoDto, UpdateUserDto } from '../dto/user.dto';
 import { UserService } from '../services/user.service';
 import { User } from '../../../../entities';
+import { AuthGuard } from '@nestjs/passport';
+
 @Controller('user')
+@UseGuards(AuthGuard('jwt'))
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -23,17 +25,44 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get('/me')
+  getUserFromCurrentUser(@Req() req): Promise<User> {
+    const { username, role } = req.user;
+    return this.userService.findFromCurrentUser(username, role);
+  }
+
   @Get('/:id')
   getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
     return this.userService.findOne(id);
   }
 
-  @Post()
+  @Get('/username/:username')
+  getUserByUsername(@Param('username') username: string): Promise<User> {
+    return this.userService.findByUsername(username);
+  }
+
+  // @dev create user occur on auth service when user register a new account
+  // @Post()
+  // @Header('Cache-Control', 'none')
+  // createUser(@Body() dto: CreateUserDto): Promise<UserInfoDto> {
+  //   const promise = new Promise<UserInfoDto>((resolve, reject) => {
+  //     try {
+  //       const user = this.userService.createUser(dto);
+  //       resolve(user);
+  //     } catch (err) {
+  //       console.error(err);
+  //       reject(err);
+  //     }
+  //   });
+  //   return promise.then((user) => user);
+  // }
+
+  @Patch()
   @Header('Cache-Control', 'none')
-  createUser(@Body() dto: CreateUserDto): Promise<UserInfoDto> {
+  updateUser(@Body() dto: UpdateUserDto): Promise<UserInfoDto> {
     const promise = new Promise<UserInfoDto>((resolve, reject) => {
       try {
-        const user = this.userService.createUser(dto);
+        const user = this.userService.updateUser(dto);
         resolve(user);
       } catch (err) {
         console.error(err);
@@ -43,12 +72,13 @@ export class UserController {
     return promise.then((user) => user);
   }
 
-  @Patch()
+  @Patch('/me')
   @Header('Cache-Control', 'none')
-  updateUser(@Body() dto: UpdateUserDto): Promise<UserInfoDto> {
+  updateCurrentUser(@Req() req, @Body() dto: UpdateUserDto): Promise<UserInfoDto> {
+    const { username, role } = req.user;
     const promise = new Promise<UserInfoDto>((resolve, reject) => {
       try {
-        const user = this.userService.updateUser(dto);
+        const user = this.userService.updateCurrentUser(username, role, dto);
         resolve(user);
       } catch (err) {
         console.error(err);

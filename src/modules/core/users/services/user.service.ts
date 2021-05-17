@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Company, Worker } from '../../../../entities';
-import { UserInfoDto, UserRole } from '../dto/user.dto';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserInfoDto, UserRole, CreateUserDto, UpdateUserDto } from '../dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -29,6 +27,33 @@ export class UserService {
       .leftJoinAndSelect('user.company', 'company')
       .where('user.id = :id', { id: id })
       .getOne();
+  }
+
+  findByUsername(username: string): Promise<User> {
+    return this.usersRepository.findOne({
+      where: {
+        username: username,
+      },
+      relations: ['worker', 'company'],
+    });
+  }
+
+  findFromCurrentUser(username: string, role: UserRole): Promise<User> {
+    if (role === UserRole.WORKER) {
+      return this.usersRepository.findOne({
+        where: {
+          username: username,
+        },
+        relations: ['worker'],
+      });
+    } else if (role === UserRole.COMPANY) {
+      return this.usersRepository.findOne({
+        where: {
+          username: username,
+        },
+        relations: ['company'],
+      });
+    }
   }
 
   createUser(data: CreateUserDto): Promise<UserInfoDto> {
@@ -68,7 +93,7 @@ export class UserService {
       });
     }
 
-    throw 'invalid role';
+    throw new BadRequestException('invalid role');
   }
 
   async updateUser(data: UpdateUserDto): Promise<UserInfoDto> {
@@ -128,7 +153,20 @@ export class UserService {
       });
     }
 
-    throw 'not found';
+    throw new NotFoundException('not found user');
+  }
+
+  async updateCurrentUser(username: string, role: UserRole, dto: UpdateUserDto) {
+    const foundUser = await this.findFromCurrentUser(username, role);
+    if (foundUser) {
+      const newDto: UpdateUserDto = {
+        ...dto,
+        id: foundUser.id,
+        role: role,
+      };
+      return this.updateUser(newDto);
+    }
+    throw new NotFoundException('not found user');
   }
 
   async remove(id: number): Promise<boolean> {
@@ -155,6 +193,6 @@ export class UserService {
       return promise;
     }
 
-    throw 'not found';
+    throw new NotFoundException('not found user');
   }
 }

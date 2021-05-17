@@ -10,10 +10,17 @@ import {
   Patch,
   Post,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { Job } from '../../../../entities';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/modules/shared/roles/guards/role.guard';
+import { Roles } from 'src/modules/shared/roles/decorators/role.decorator';
+import { UserRole } from '../../users/dto/user.dto';
 
 @Controller('job')
+@UseGuards(RolesGuard)
+@UseGuards(AuthGuard('jwt'))
 export class JobController {
   constructor(private readonly jobService: JobService) {}
 
@@ -28,6 +35,7 @@ export class JobController {
   }
 
   @Post()
+  @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   createJob(@Body() dto: CreateJobDto): Promise<Job> {
     const promise = new Promise<Job>((resolve, reject) => {
@@ -48,6 +56,7 @@ export class JobController {
   }
 
   @Patch()
+  @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   updateJob(@Body() dto: UpdateJobDto): Promise<Job> {
     const promise = new Promise<Job>((resolve, reject) => {
@@ -68,6 +77,7 @@ export class JobController {
   }
 
   @Delete('/:id')
+  @Roles(UserRole.COMPANY)
   removeJobById(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
     return this.jobService.remove(id);
   }

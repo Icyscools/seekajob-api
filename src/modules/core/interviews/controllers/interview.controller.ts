@@ -8,12 +8,20 @@ import {
   Patch,
   Post,
   ParseIntPipe,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { Interview } from '../../../../entities';
 import { InterviewService } from '../services/interview.service';
 import { CreateInterviewDto, UpdateInterviewDto } from '../dto/interview.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/modules/shared/roles/guards/role.guard';
+import { UserRole } from '../../users/dto/user.dto';
+import { Roles } from 'src/modules/shared/roles/decorators/role.decorator';
 
 @Controller('interview')
+@UseGuards(RolesGuard)
+@UseGuards(AuthGuard('jwt'))
 export class InterviewController {
   constructor(private readonly interviewService: InterviewService) {}
 
@@ -22,12 +30,19 @@ export class InterviewController {
     return this.interviewService.findAll();
   }
 
+  @Get('/me')
+  getInterviewsByCurrentUser(@Req() req): Promise<Interview[]> {
+    const { username, role } = req.user;
+    return this.interviewService.findFromCurrentUser(username, role);
+  }
+
   @Get('/:id')
   getInterviewById(@Param('id', ParseIntPipe) id: number): Promise<Interview> {
     return this.interviewService.findOne(id);
   }
 
   @Post()
+  @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   createInterview(@Body() dto: CreateInterviewDto): Promise<Interview> {
     const promise = new Promise<Interview>((resolve, reject) => {
@@ -48,6 +63,7 @@ export class InterviewController {
   }
 
   @Patch()
+  @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   updateInterview(@Body() dto: UpdateInterviewDto): Promise<Interview> {
     const promise = new Promise<Interview>((resolve, reject) => {
@@ -68,6 +84,7 @@ export class InterviewController {
   }
 
   @Delete('/:id')
+  @Roles(UserRole.COMPANY)
   removeInterviewById(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
     return this.interviewService.remove(id);
   }

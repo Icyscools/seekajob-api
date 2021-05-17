@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateJobDto, UpdateJobDto } from '../dto/job.dto';
@@ -31,8 +31,7 @@ export class JobService {
       jobSchema.company = foundCompany;
       return this.jobsRepository.save(jobSchema);
     }
-
-    throw 'not found company';
+    throw new BadRequestException();
   }
 
   async updateJob(data: UpdateJobDto): Promise<Job> {
@@ -61,6 +60,6 @@ export class JobService {
       );
       return promise;
     }
-    throw 'not found';
+    throw new NotFoundException();
   }
 }

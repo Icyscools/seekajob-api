@@ -1,8 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateApplicationDto, UpdateApplicationDto } from '../dto/application.dto';
 import { Application, Job, Worker } from '../../../../entities';
+import { UserRole } from '../../users/dto/user.dto';
 
 @Injectable()
 export class ApplicationService {
@@ -23,6 +29,35 @@ export class ApplicationService {
     return this.applicationsRepository.findOne(id, { relations: ['worker', 'job'] });
   }
 
+  findFromCurrentUser(username: string, role: UserRole): Promise<Application[]> {
+    if (role === UserRole.WORKER) {
+      return this.applicationsRepository.find({
+        where: {
+          worker: {
+            user: {
+              username: username,
+            },
+          },
+        },
+        relations: ['worker', 'job'],
+      });
+    } else if (role === UserRole.COMPANY) {
+      return this.applicationsRepository.find({
+        where: {
+          job: {
+            company: {
+              user: {
+                username: username,
+              },
+            },
+          },
+        },
+        relations: ['worker', 'job'],
+      });
+    }
+    throw new UnauthorizedException('not logging in');
+  }
+
   async createApplication(data: CreateApplicationDto): Promise<Application> {
     const { workerId, jobId, ...rest } = data;
     const foundWorker: Worker = await this.workersRepository.findOne(workerId);
@@ -36,7 +71,7 @@ export class ApplicationService {
       return this.applicationsRepository.save(applicationSchema);
     }
 
-    throw 'not found worker or job';
+    throw new BadRequestException();
   }
 
   async updateApplication(data: UpdateApplicationDto): Promise<Application> {
@@ -65,6 +100,6 @@ export class ApplicationService {
       );
       return promise;
     }
-    throw 'not found';
+    throw new NotFoundException();
   }
 }

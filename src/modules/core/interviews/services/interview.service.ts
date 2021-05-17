@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Application, Interview } from '../../../../entities';
+import { UserRole } from '../../users/dto/user.dto';
 import { CreateInterviewDto, UpdateInterviewDto } from '../dto/interview.dto';
 
 @Injectable()
@@ -21,6 +23,39 @@ export class InterviewService {
     return this.interviewsRepository.findOne(id, { relations: ['application'] });
   }
 
+  findFromCurrentUser(username: string, role: UserRole): Promise<Interview[]> {
+    if (role === UserRole.WORKER) {
+      return this.interviewsRepository.find({
+        where: {
+          application: {
+            worker: {
+              user: {
+                username: username,
+              },
+            },
+          },
+        },
+        relations: ['application'],
+      });
+    } else if (role === UserRole.COMPANY) {
+      return this.interviewsRepository.find({
+        where: {
+          application: {
+            job: {
+              company: {
+                user: {
+                  username: username,
+                },
+              },
+            },
+          },
+        },
+        relations: ['application'],
+      });
+    }
+    throw new UnauthorizedException('not logging in');
+  }
+
   async createInterview(data: CreateInterviewDto): Promise<Interview> {
     const { applicationId, ...rest } = data;
     const foundApplication: Application = await this.applicationsRepository.findOne(applicationId);
@@ -31,8 +66,7 @@ export class InterviewService {
       interviewSchema.application = foundApplication;
       return this.interviewsRepository.save(interviewSchema);
     }
-
-    throw 'not found worker or job';
+    throw new BadRequestException();
   }
 
   async updateInterview(data: UpdateInterviewDto): Promise<Interview> {
@@ -61,6 +95,6 @@ export class InterviewService {
       );
       return promise;
     }
-    throw 'not found';
+    throw new NotFoundException();
   }
 }

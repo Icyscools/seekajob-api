@@ -12,7 +12,8 @@ import {
   AuthResendConfirmationDto,
 } from '../dto/auth.dto';
 import { UserService } from '../../users/services/user.service';
-import { CreateUserDto } from '../../users/dto/create-user.dto';
+import { CreateUserDto } from '../../users/dto/user.dto';
+import { UserRole } from '../../users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +29,11 @@ export class AuthService {
       UserPoolId: this.authConfig.userPoolId,
       ClientId: this.authConfig.clientId,
     });
+  }
+
+  async validateRole(username: string): Promise<UserRole> {
+    const user = await this.userService.findByUsername(username);
+    return user.role;
   }
 
   registerUser(createUserData: CreateUserDto) {
