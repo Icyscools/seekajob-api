@@ -11,6 +11,7 @@ import {
   Post,
   ParseIntPipe,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { Job } from '../../../../entities';
 import { AuthGuard } from '@nestjs/passport';
@@ -25,6 +26,15 @@ export class JobController {
   @Get()
   getJobs(): Promise<Job[]> {
     return this.jobService.findAll();
+  }
+
+  @Get('/me')
+  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
+  @Roles(UserRole.COMPANY)
+  getJobByCompany(@Req() req): Promise<Job[]> {
+    const { username, role } = req.user;
+    return this.jobService.findFromCurrentUser(username, role);
   }
 
   @Get('/:id')

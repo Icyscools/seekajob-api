@@ -1,8 +1,16 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateJobDto, UpdateJobDto } from '../dto/job.dto';
-import { Company, Job } from '../../../../entities';
+import { Company, Job, User } from '../../../../entities';
+import { UserRole } from '../../users/dto/user.dto';
+import { UserService } from '../../users/services/user.service';
 @Injectable()
 export class JobService {
   constructor(
@@ -10,6 +18,8 @@ export class JobService {
     private jobsRepository: Repository<Job>,
     @InjectRepository(Company)
     private companiesRepository: Repository<Company>,
+    @Inject('UserService')
+    private userService: UserService,
   ) {}
 
   findAll(): Promise<Job[]> {
@@ -18,6 +28,19 @@ export class JobService {
 
   findOne(id: number): Promise<Job> {
     return this.jobsRepository.findOne(id, { relations: ['company'] });
+  }
+
+  async findFromCurrentUser(username: string, role: UserRole): Promise<Job[]> {
+    const foundCompany: User = await this.userService.findByUsername(username);
+    if (role === UserRole.COMPANY) {
+      return this.jobsRepository.find({
+        where: {
+          company: foundCompany.company,
+        },
+        relations: ['company', 'applications'],
+      });
+    }
+    throw new UnauthorizedException('not logging in');
   }
 
   async createJob(data: CreateJobDto): Promise<Job> {
