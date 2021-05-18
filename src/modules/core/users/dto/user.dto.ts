@@ -46,6 +46,9 @@ export interface CreateUser {
 
 export interface CreateWorkerDto extends CreateUser {
   role: UserRole.WORKER;
+  qualification?: string;
+  phone_number?: string;
+  experience?: string;
 }
 
 export interface CreateCompanyDto extends CreateUser {

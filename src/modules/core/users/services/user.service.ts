@@ -64,8 +64,13 @@ export class UserService {
       });
 
       return this.usersRepository.save(userSchema).then((user) => {
+        const { experience, phone_number, qualification, ...userData } = data;
+
         const workerSchema = this.workersRepository.create({
           user: user,
+          experience,
+          phone_number,
+          qualification,
         });
         return this.workersRepository.save(workerSchema).then((worker) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
