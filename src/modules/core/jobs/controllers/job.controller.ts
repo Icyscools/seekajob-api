@@ -19,8 +19,6 @@ import { Roles } from 'src/modules/shared/roles/decorators/role.decorator';
 import { UserRole } from '../../users/dto/user.dto';
 
 @Controller('job')
-@UseGuards(RolesGuard)
-@UseGuards(AuthGuard('jwt'))
 export class JobController {
   constructor(private readonly jobService: JobService) {}
 
@@ -35,6 +33,8 @@ export class JobController {
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   createJob(@Body() dto: CreateJobDto): Promise<Job> {
@@ -56,6 +56,8 @@ export class JobController {
   }
 
   @Patch()
+  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.COMPANY)
   @Header('Cache-Control', 'none')
   updateJob(@Body() dto: UpdateJobDto): Promise<Job> {
@@ -77,6 +79,8 @@ export class JobController {
   }
 
   @Delete('/:id')
+  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Roles(UserRole.COMPANY)
   removeJobById(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
     return this.jobService.remove(id);
