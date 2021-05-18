@@ -8,9 +8,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateApplicationDto, UpdateApplicationDto } from '../dto/application.dto';
-import { Application, Job, Worker } from '../../../../entities';
+import { Application, Job, User, Worker } from '../../../../entities';
 import { UserRole } from '../../users/dto/user.dto';
 import { FilesService } from '../../../shared/uploadfiles/services/files.service';
+import { UserService } from '../../users/services/user.service';
 
 @Injectable()
 export class ApplicationService {
@@ -23,6 +24,8 @@ export class ApplicationService {
     private jobsRepository: Repository<Job>,
     @Inject('FilesService')
     private filesService: FilesService,
+    @Inject('UserService')
+    private userService: UserService,
   ) {}
 
   findAll(): Promise<Application[]> {
@@ -33,30 +36,21 @@ export class ApplicationService {
     return this.applicationsRepository.findOne(id, { relations: ['worker', 'job'] });
   }
 
-  findFromCurrentUser(username: string, role: UserRole): Promise<Application[]> {
+  async findFromCurrentUser(username: string, role: UserRole): Promise<Application[] | Job[]> {
+    const foundUser: User = await this.userService.findByUsername(username);
     if (role === UserRole.WORKER) {
       return this.applicationsRepository.find({
         where: {
-          worker: {
-            user: {
-              username: username,
-            },
-          },
+          worker: foundUser.worker,
         },
-        relations: ['worker', 'job'],
+        relations: ['job', 'job.company', 'job.company.user'],
       });
     } else if (role === UserRole.COMPANY) {
-      return this.applicationsRepository.find({
+      return this.jobsRepository.find({
         where: {
-          job: {
-            company: {
-              user: {
-                username: username,
-              },
-            },
-          },
+          company: foundUser.company,
         },
-        relations: ['worker', 'job'],
+        relations: ['applications', 'applications.worker', 'applications.worker.user', 'company'],
       });
     }
     throw new UnauthorizedException('not logging in');

@@ -14,7 +14,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Application } from '../../../../entities';
+import { Application, Job } from '../../../../entities';
 import { ApplicationService } from '../services/application.service';
 import { CreateApplicationDto, UpdateApplicationDto } from '../dto/application.dto';
 import { RolesGuard } from '../../../shared/roles/guards/role.guard';
@@ -34,7 +34,7 @@ export class ApplicationController {
   }
 
   @Get('/me')
-  getApplicationsFromCurrentUser(@Req() req): Promise<Application[]> {
+  getApplicationsFromCurrentUser(@Req() req): Promise<Application[] | Job[]> {
     const { username, role } = req.user;
     return this.applicationService.findFromCurrentUser(username, role);
   }
