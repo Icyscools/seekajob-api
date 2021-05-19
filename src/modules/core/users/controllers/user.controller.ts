@@ -81,7 +81,7 @@ export class UserController {
 
   @Patch('/me')
   @Header('Cache-Control', 'none')
-  @UseInterceptors(FileInterceptor('profile_image'))
+  @UseInterceptors(FileInterceptor('profile_img'))
   updateCurrentUser(
     @Req() req,
     @Body() dto: UpdateUserDto,
