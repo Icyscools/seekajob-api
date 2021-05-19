@@ -1,9 +1,10 @@
-import { NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Application, Interview } from '../../../../entities';
 import { UserRole } from '../../users/dto/user.dto';
+import { UserService } from '../../users/services/user.service';
 import { CreateInterviewDto, UpdateInterviewDto } from '../dto/interview.dto';
 
 @Injectable()
@@ -13,6 +14,8 @@ export class InterviewService {
     private interviewsRepository: Repository<Interview>,
     @InjectRepository(Application)
     private applicationsRepository: Repository<Application>,
+    @Inject('UserService')
+    private userService: UserService,
   ) {}
 
   findAll(): Promise<Interview[]> {

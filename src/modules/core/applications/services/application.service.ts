@@ -29,11 +29,15 @@ export class ApplicationService {
   ) {}
 
   findAll(): Promise<Application[]> {
-    return this.applicationsRepository.find({ relations: ['worker', 'job'] });
+    return this.applicationsRepository.find({
+      relations: ['worker', 'worker.user', 'job', 'interview'],
+    });
   }
 
   findOne(id: number): Promise<Application> {
-    return this.applicationsRepository.findOne(id, { relations: ['worker', 'job'] });
+    return this.applicationsRepository.findOne(id, {
+      relations: ['worker', 'worker.user', 'job', 'job.company', 'job.company.user', 'interview'],
+    });
   }
 
   async findFromCurrentUser(username: string, role: UserRole): Promise<Application[] | Job[]> {
@@ -43,14 +47,20 @@ export class ApplicationService {
         where: {
           worker: foundUser.worker,
         },
-        relations: ['job', 'job.company', 'job.company.user'],
+        relations: ['job', 'job.company', 'job.company.user', 'interview'],
       });
     } else if (role === UserRole.COMPANY) {
       return this.jobsRepository.find({
         where: {
           company: foundUser.company,
         },
-        relations: ['applications', 'applications.worker', 'applications.worker.user', 'company'],
+        relations: [
+          'applications',
+          'applications.worker',
+          'applications.worker.user',
+          'applications.interview',
+          'company',
+        ],
       });
     }
     throw new UnauthorizedException('not logging in');
